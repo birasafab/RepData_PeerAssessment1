@@ -1,0 +1,128 @@
+---
+title: "Course 5_Assignment1"
+author: "birasafab"
+date: "1/12/2021"
+output: html_document
+---
+
+```{r setup, include = FALSE, message = FALSE, warning = FALSE, cache=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##### Reading the required dataset for tidying and analysis
+```{r, warning=FALSE, message=FALSE}
+library(readr)
+Activity<-read_csv("activity.zip")
+
+Activity$date<-as.Date(Activity$date,"%m/%d/%Y")
+Weekday<-weekdays(Activity$date)
+Activity<-cbind(Activity,Weekday)
+
+summary(Activity)
+```
+
+# Mean Total
+
+#### Ploting the total number of steps taken per day
+```{r}
+Total_steps_Day<-with(Activity, aggregate(steps,by = list(date),FUN = sum, na.rm = TRUE),sort=TRUE)
+names(Total_steps_Day)<-c("date","steps")
+
+# ploting the histogram of the total number of steps taken per each day
+hist(Total_steps_Day$steps,main = "Total number of steps taken per day", col = "red", xlab = "Total steps taken per day",ylim = c(0,20), breaks = seq(0,25000, by = 2500))
+```
+
+#### Mean of total number of steps taken per day
+```{r}
+mean(Total_steps_Day$steps)
+```
+
+#### Median of total number of steps taken per day
+```{r}
+median(Total_steps_Day$steps)
+
+```
+
+# Average daily pattern
+#### What is the average daily activity pattern?
+```{r}
+average_daily_activity <- aggregate(Activity$steps, by = list (Activity$interval), FUN = mean, na.rm = TRUE)
+
+names(average_daily_activity)<-c("interval","mean")
+
+plot(average_daily_activity$interval,col = "red", average_daily_activity$mean,type = "l", xlab = "Interval", ylab = "Average number of steps", main = "Average number of steps per interval")
+```
+
+## 5-minute interval, max
+##### Finding which 5-minute interval contains the maximum number of steps, on average across all the days in the dataset
+```{r}
+average_daily_activity[which.max(average_daily_activity$mean),]$interval
+```
+
+# Imputing Missing Values
+
+### Calculating the total number missing values in the entire dataset
+
+```{r}
+
+max(row(Activity))-sum(complete.cases(Activity))
+```
+
+### Devise a strategy for filling in all the missing values in the dataset
+
+```{r}
+steps_clean<- average_daily_activity$mean[match(Activity$interval,average_daily_activity$interval)]
+```
+
+### Creating a new dataset that is equal to the original dataset but with the missing data filled in:
+
+```{r}
+Activity_clean <- transform(Activity, steps =  ifelse(is.na(Activity$steps),steps_clean,Activity$steps))
+
+Total_clean_steps <- aggregate(steps ~ date, Activity_clean,sum)
+
+names(Total_clean_steps) <- c("date","daily_steps")
+```
+
+### Make a histogram of the total number of steps taken each day and calculate and report the mean and median total number of steps taken per day. Verify if these values differ from the estimates from the first part of the assignment. and What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{r}
+hist(Total_clean_steps$daily_steps, col = "darkblue",xlab = "Total steps per day", ylim = c(0,30), main = "Total number of steps taken each day")
+```
+
+### Calculating the Mean of the total number of steps taken per day
+
+```{r}
+mean(Total_clean_steps$daily_steps)
+```
+
+### Calculating the Median of the total number of steps taken per day
+
+```{r}
+median(Total_clean_steps$daily_steps)
+```
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+tail(Activity)
+Activity$datetype = sapply (Activity$date, function(x) 
+        {
+                if (weekdays(x) == "Saturday" | weekdays(x) == "Sunday")
+                {y <- "Weekend"} else
+                {y <- "Weekday"}
+                y
+        })
+
+```
+
+
+### A panel plot containing a time series plot (type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weeekend days (y-axis)
+
+```{r}
+Activity.datetype<-aggregate(steps~interval+datetype,Activity,mean, na.rm = TRUE)
+
+library(ggplot2)
+ggplot(Activity.datetype, aes(x = interval, y = steps, color = datetype)) + geom_line() + labs(title = "Average daily steps by date type", X = "Interval", y = "Average number of steps") + facet_wrap(~datetype, ncol = 1, nrow=2)
+```
+#End.
