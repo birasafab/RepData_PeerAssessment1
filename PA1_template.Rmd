@@ -6,20 +6,79 @@ output:
 ---
 
 
-## Loading and preprocessing the data
-
+## Loading and preprocessing the data 
+```{r,echo=TRUE}
+Steps<-read.csv("C:/Users/binayak mishra/Desktop/activity.csv")
+Steps
+```
 
 
 ## What is mean total number of steps taken per day?
-
-
-
+---
+To calculate the total no of steps taken
+```{r,echo=TRUE} 
+totalsteps<-aggregate(Steps$steps,by=list(Steps$date),sum)
+totalsteps
+```
+To plot the histogram
+```{r,echo=TRUE}
+library(ggplot2)
+colnames(totalsteps)=c("Date","STEPS")
+g<-ggplot(totalsteps,aes(STEPS))+geom_histogram(,binwidth=1000)+xlab("steps")+ylab("frequency")
+print(g)
+```
+To find the mean and median of total steps taken
+```{r,echo=TRUE} 
+meanstepsperday<-mean(totalsteps$STEPS,na.rm=TRUE)
+meanstepsperday
+medianstepsperday<-median(totalsteps$STEPS,na.rm=TRUE)
+medianstepsperday
+```
 ## What is the average daily activity pattern?
+```{r,echo=TRUE}
+timeseriessteps<-aggregate(steps~interval,Steps,FUN = mean,na.action = na.omit)
+library(ggplot2)
+m<-ggplot(timeseriessteps,aes(interval,steps))+geom_line(col="blue")+ggtitle("Time series plot")+xlab("interval")+ylab("steps")
+print(m)
+```
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps? 
+```{r,echo=TRUE}
+library(dplyr)
+gg<-tbl_df(timeseriessteps)
+gg %>% select(interval,steps)%>%filter(steps==max(timeseriessteps$steps))
+gg
+```
 
 
 
-## Imputing missing values
-
-
+## Imputing missing values 
+```{r,echo=TRUE}
+sum(is.na(Steps))
+```
+Devise a strategy for filling in all of the missing values in the dataset
+```{r,echo=TRUE} 
+library(dplyr)
+Nomissingsteps<-Steps[complete.cases(Steps),]
+totalsteps1<-aggregate(Nomissingsteps$steps,by=list(Nomissingsteps$date),sum)
+library(ggplot2)
+f<-ggplot(totalsteps1,aes(x))+geom_histogram(,binwidth = 1000)+xlab("steps")+ylab("frequency")
+print(f)
+MEAN<-mean(Nomissingsteps$steps)
+MEAN
+MEDIAN<-median(Nomissingsteps$steps)
+MEDIAN
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r,echo=TRUE}
+Steps$day<-weekdays(as.Date(Steps$date))
+Steps$weekdaytype<-ifelse(Steps$day=="Saturday"|Steps$day=="Sunday","weekend","weekday")
+Steps$weekdaytype
+```
+```{r,echo=TRUE}
+library(dplyr)
+timeseriesstepzs1<-aggregate(steps~interval+weekdaytype,Steps,FUN = mean)
+library(ggplot2)
+a<-ggplot(timeseriesstepzs1,aes(interval,steps))+geom_line(col="blue")+facet_grid(weekdaytype~.)+xlab("5min Interval")+ylab("Steps")
+print(a)
+```
