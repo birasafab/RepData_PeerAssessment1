@@ -10,7 +10,6 @@ output:
 
 ```r
 Steps<-read.csv("C:/Users/binayak mishra/Desktop/activity.csv")
-Steps
 ```
 
 ```
